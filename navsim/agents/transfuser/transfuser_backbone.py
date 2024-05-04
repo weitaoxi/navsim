@@ -21,8 +21,14 @@ class TransfuserBackbone(nn.Module):
         self.config = config
 
         self.image_encoder = timm.create_model(
-            config.image_architecture, pretrained=True, features_only=True
+            config.image_architecture, pretrained=False, features_only=True
         )
+
+        checkpoint_path='/home/zt/cvpr/zt/navsim_workspace/exp/training_transfuser_agent/model/pytorch_model.bin'
+        loaded_weights = torch.load(checkpoint_path)
+        # Load weights into the model
+        self.image_encoder.load_state_dict(loaded_weights, strict=False)
+
         if config.use_ground_plane:
             in_channels = 2 * config.lidar_seq_len
         else:
