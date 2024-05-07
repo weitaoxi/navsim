@@ -25,10 +25,10 @@ def main():
     with gzip.open(file_name, "rb", compresslevel=1) as f:
         traj_tensor = pickle.load(f)
     
-    traj_nodes = get_traj_cluster(traj_tensor, 500)
+    traj_nodes = get_traj_cluster(traj_tensor, 4096)
 
-    # with gzip.open(output_file, "wb", compresslevel=1) as f:
-    #     pickle.dump(traj_nodes, f)
+    with gzip.open(output_file, "wb", compresslevel=1) as f:
+        pickle.dump(traj_nodes, f)
     plot_tensor(traj_nodes)
 
 def cal_distance(diff_tensor):
