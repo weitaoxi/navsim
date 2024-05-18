@@ -208,8 +208,39 @@ class Dataset(torch.utils.data.Dataset):
             """
             )
 
+        counter = 0
+        token_num = len(tokens_to_cache)
         for token in tqdm(tokens_to_cache, desc="Caching Dataset"):
+            temp_counter = counter
+            while not self.check_sensor_data(token):
+                temp_counter = (temp_counter+1) % token_num
+                token = tokens_to_cache[temp_counter]
+            counter += 1
+
             self._cache_scene_with_token(token)
+
+    def check_sensor_data(self, token):
+        # check whether sensor data exist
+        sensor_blobs_path = self._scene_loader._sensor_blobs_path
+        scene_dict_list = self._scene_loader.scene_frames_dicts[token]
+        sensor_config = self._scene_loader._sensor_config
+        for frame_idx in range(len(scene_dict_list)):
+            sensor_names = sensor_config.get_sensors_at_iteration(frame_idx)
+            camera_dict = scene_dict_list[frame_idx]["cams"]
+            for camera_name in camera_dict.keys():
+                camera_identifier = camera_name.lower()
+                if camera_identifier in sensor_names:
+                    image_path = sensor_blobs_path / camera_dict[camera_name]["data_path"]
+                    if not image_path.is_file():
+                        return False
+
+            lidar_path = Path(scene_dict_list[frame_idx]["lidar_path"])
+            if "lidar_pc" in sensor_names:
+                global_lidar_path = sensor_blobs_path / lidar_path
+                if not global_lidar_path.is_file():
+                    return False
+
+        return True
 
     def __len__(self):
         return len(self._scene_loader)
